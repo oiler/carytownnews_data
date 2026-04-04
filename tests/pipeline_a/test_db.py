@@ -1,6 +1,6 @@
 import sqlite3
 from datetime import datetime, timezone
-from pipelines.shared.schema import Expenditure, Revenue, FundSummary, NormalizedResult
+from pipelines.shared.schema import Expenditure, Revenue, FundSummary
 from pipelines.shared.db import create_schema, upsert_expenditures, upsert_revenues, upsert_fund_summaries
 
 NOW = datetime(2026, 4, 4, 12, 0, 0, tzinfo=timezone.utc)
@@ -122,3 +122,33 @@ def test_upsert_fund_summary_is_idempotent():
     upsert_fund_summaries(conn, [summary])
     count = conn.execute("SELECT COUNT(*) FROM fund_summaries").fetchone()[0]
     assert count == 1
+
+
+def test_upsert_revenues_updates_amount_on_conflict():
+    conn = make_conn()
+    base = dict(
+        pipeline="A", source_file="resources/budgets/2025.pdf",
+        doc_type="budget", fiscal_year=2025, quarter=None,
+        fund="General", source="Property Tax",
+        amount_type="adopted", extracted_at=NOW,
+    )
+    upsert_revenues(conn, [Revenue(**base, amount=1_000.0)])
+    upsert_revenues(conn, [Revenue(**base, amount=2_000.0)])
+    amount = conn.execute("SELECT amount FROM revenues").fetchone()[0]
+    assert amount == 2_000.0
+
+
+def test_upsert_fund_summary_updates_amount_on_conflict():
+    conn = make_conn()
+    base = dict(
+        pipeline="A", source_file="resources/budgets/2025.pdf",
+        doc_type="budget", fiscal_year=2025, quarter=None,
+        fund="General", transfers_in=5_000_000.0,
+        transfers_out=10_000_000.0, beginning_balance=50_000_000.0,
+        ending_balance=50_000_000.0, extracted_at=NOW,
+    )
+    upsert_fund_summaries(conn, [FundSummary(**base, total_revenues=100_000_000.0, total_expenditures=90_000_000.0)])
+    upsert_fund_summaries(conn, [FundSummary(**base, total_revenues=200_000_000.0, total_expenditures=195_000_000.0)])
+    row = conn.execute("SELECT total_revenues, total_expenditures FROM fund_summaries").fetchone()
+    assert row[0] == 200_000_000.0
+    assert row[1] == 195_000_000.0

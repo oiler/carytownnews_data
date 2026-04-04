@@ -98,9 +98,11 @@ def create_schema(conn: sqlite3.Connection) -> None:
     conn.commit()
 
 
-def upsert_expenditures(conn: sqlite3.Connection, rows: list[Expenditure]) -> int:
+# On conflict, only update amount and extracted_at.
+# Key fields (fund, department, etc.) are assumed stable across re-extractions.
+def upsert_expenditures(conn: sqlite3.Connection, rows: list[Expenditure]) -> None:
     if not rows:
-        return 0
+        return
     insert_sql = """
     INSERT OR IGNORE INTO expenditures
         (pipeline, source_file, doc_type, fiscal_year, quarter, fund,
@@ -114,24 +116,33 @@ def upsert_expenditures(conn: sqlite3.Connection, rows: list[Expenditure]) -> in
       AND (quarter IS ?) AND fund=? AND department=?
       AND (division IS ?) AND amount_type=?
     """
-    for r in rows:
-        ts = r.extracted_at.isoformat()
-        conn.execute(insert_sql, (
-            r.pipeline, r.source_file, r.doc_type, r.fiscal_year, r.quarter,
-            r.fund, r.department, r.division, r.amount_type, r.amount, ts,
-        ))
-        conn.execute(update_sql, (
-            r.amount, ts,
-            r.pipeline, r.source_file, r.doc_type, r.fiscal_year, r.quarter,
-            r.fund, r.department, r.division, r.amount_type,
-        ))
-    conn.commit()
-    return len(rows)
+    with conn:
+        conn.executemany(insert_sql, [
+            (
+                r.pipeline, r.source_file, r.doc_type, r.fiscal_year, r.quarter,
+                r.fund, r.department,
+                r.division if r.division else None,  # normalize "" to None
+                r.amount_type, r.amount, r.extracted_at.isoformat(),
+            )
+            for r in rows
+        ])
+        conn.executemany(update_sql, [
+            (
+                r.amount, r.extracted_at.isoformat(),
+                r.pipeline, r.source_file, r.doc_type, r.fiscal_year, r.quarter,
+                r.fund, r.department,
+                r.division if r.division else None,  # normalize "" to None
+                r.amount_type,
+            )
+            for r in rows
+        ])
 
 
-def upsert_revenues(conn: sqlite3.Connection, rows: list[Revenue]) -> int:
+# On conflict, only update amount and extracted_at.
+# Key fields (fund, source, etc.) are assumed stable across re-extractions.
+def upsert_revenues(conn: sqlite3.Connection, rows: list[Revenue]) -> None:
     if not rows:
-        return 0
+        return
     insert_sql = """
     INSERT OR IGNORE INTO revenues
         (pipeline, source_file, doc_type, fiscal_year, quarter, fund,
@@ -144,24 +155,29 @@ def upsert_revenues(conn: sqlite3.Connection, rows: list[Revenue]) -> int:
     WHERE pipeline=? AND source_file=? AND doc_type=? AND fiscal_year=?
       AND (quarter IS ?) AND fund=? AND source=? AND amount_type=?
     """
-    for r in rows:
-        ts = r.extracted_at.isoformat()
-        conn.execute(insert_sql, (
-            r.pipeline, r.source_file, r.doc_type, r.fiscal_year, r.quarter,
-            r.fund, r.source, r.amount_type, r.amount, ts,
-        ))
-        conn.execute(update_sql, (
-            r.amount, ts,
-            r.pipeline, r.source_file, r.doc_type, r.fiscal_year, r.quarter,
-            r.fund, r.source, r.amount_type,
-        ))
-    conn.commit()
-    return len(rows)
+    with conn:
+        conn.executemany(insert_sql, [
+            (
+                r.pipeline, r.source_file, r.doc_type, r.fiscal_year, r.quarter,
+                r.fund, r.source, r.amount_type, r.amount, r.extracted_at.isoformat(),
+            )
+            for r in rows
+        ])
+        conn.executemany(update_sql, [
+            (
+                r.amount, r.extracted_at.isoformat(),
+                r.pipeline, r.source_file, r.doc_type, r.fiscal_year, r.quarter,
+                r.fund, r.source, r.amount_type,
+            )
+            for r in rows
+        ])
 
 
-def upsert_fund_summaries(conn: sqlite3.Connection, rows: list[FundSummary]) -> int:
+# On conflict, only update amount fields and extracted_at.
+# Key fields (fund, etc.) are assumed stable across re-extractions.
+def upsert_fund_summaries(conn: sqlite3.Connection, rows: list[FundSummary]) -> None:
     if not rows:
-        return 0
+        return
     insert_sql = """
     INSERT OR IGNORE INTO fund_summaries
         (pipeline, source_file, doc_type, fiscal_year, quarter, fund,
@@ -176,17 +192,20 @@ def upsert_fund_summaries(conn: sqlite3.Connection, rows: list[FundSummary]) -> 
     WHERE pipeline=? AND source_file=? AND doc_type=? AND fiscal_year=?
       AND (quarter IS ?) AND fund=?
     """
-    for r in rows:
-        ts = r.extracted_at.isoformat()
-        conn.execute(insert_sql, (
-            r.pipeline, r.source_file, r.doc_type, r.fiscal_year, r.quarter, r.fund,
-            r.total_revenues, r.total_expenditures, r.transfers_in, r.transfers_out,
-            r.beginning_balance, r.ending_balance, ts,
-        ))
-        conn.execute(update_sql, (
-            r.total_revenues, r.total_expenditures, r.transfers_in, r.transfers_out,
-            r.beginning_balance, r.ending_balance, ts,
-            r.pipeline, r.source_file, r.doc_type, r.fiscal_year, r.quarter, r.fund,
-        ))
-    conn.commit()
-    return len(rows)
+    with conn:
+        conn.executemany(insert_sql, [
+            (
+                r.pipeline, r.source_file, r.doc_type, r.fiscal_year, r.quarter, r.fund,
+                r.total_revenues, r.total_expenditures, r.transfers_in, r.transfers_out,
+                r.beginning_balance, r.ending_balance, r.extracted_at.isoformat(),
+            )
+            for r in rows
+        ])
+        conn.executemany(update_sql, [
+            (
+                r.total_revenues, r.total_expenditures, r.transfers_in, r.transfers_out,
+                r.beginning_balance, r.ending_balance, r.extracted_at.isoformat(),
+                r.pipeline, r.source_file, r.doc_type, r.fiscal_year, r.quarter, r.fund,
+            )
+            for r in rows
+        ])
