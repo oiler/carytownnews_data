@@ -14,6 +14,9 @@ def find_section_pages(pdf_path: str, anchors: list[SectionAnchor]) -> dict[str,
       then include that page + the next `pages_after` pages.
     - If collect_all=True: find ALL pages containing the keyword.
 
+    Keyword matching is case-sensitive. Keywords in page_map.py use the exact
+    casing found in the PDF text (typically ALL-CAPS section headers).
+
     Returns {section_name: [page_numbers, ...]}.
     Pages with no text (e.g. image-only pages) are skipped silently.
     """

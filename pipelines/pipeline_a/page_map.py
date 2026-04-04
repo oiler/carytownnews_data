@@ -4,9 +4,9 @@ from dataclasses import dataclass
 @dataclass
 class SectionAnchor:
     section: str       # logical name, e.g. "budget_overview"
-    keyword: str       # text to search for in PDF pages
-    pages_after: int   # how many pages after the match to include (0 = only the match page)
-    collect_all: bool  # if True, collect every page containing the keyword (vs. first match only)
+    keyword: str       # text to search for in PDF pages (case-sensitive)
+    pages_after: int   # pages to include after first match (ignored when collect_all=True)
+    collect_all: bool  # True: collect every matching page; False: first match + pages_after only
 
 
 _BUDGET_ANCHORS = [

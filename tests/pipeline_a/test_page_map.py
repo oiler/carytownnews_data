@@ -11,7 +11,7 @@ def test_budget_returns_budget_overview_anchor():
 def test_budget_overview_anchor_has_keyword():
     anchors = get_anchors("budget")
     overview = next(a for a in anchors if a.section == "budget_overview")
-    assert "BUDGET OVERVIEW" in overview.keyword
+    assert overview.keyword == "BUDGET OVERVIEW"
 
 
 def test_budget_returns_dept_profiles_anchor():
@@ -41,6 +41,15 @@ def test_quarterly_pages_after_is_positive():
 def test_acfr_returns_anchors():
     anchors = get_anchors("acfr")
     assert len(anchors) > 0
+    sections = [a.section for a in anchors]
+    assert "financial_statements" in sections
+
+
+def test_acfr_financial_statements_anchor_has_keyword():
+    anchors = get_anchors("acfr")
+    fs = next(a for a in anchors if a.section == "financial_statements")
+    assert "Statement" in fs.keyword
+    assert fs.pages_after > 0
 
 
 def test_unknown_doc_type_raises():
