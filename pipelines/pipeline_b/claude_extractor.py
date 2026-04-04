@@ -9,7 +9,6 @@ from anthropic import Anthropic, APIStatusError
 logger = logging.getLogger(__name__)
 
 MODEL = "claude-haiku-4-5-20251001"
-_EMPTY_DATA = {"expenditures": [], "revenues": [], "fund_summaries": []}
 _MAX_RETRIES = 3
 _RETRY_BASE_SECONDS = 2
 
@@ -65,7 +64,7 @@ def extract_page(image_bytes: bytes, prompt: str, client: Anthropic) -> ExtractR
                 data = json.loads(stripped)
             except json.JSONDecodeError:
                 logger.warning(f"Claude returned invalid JSON: {text[:200]!r}")
-                data = _EMPTY_DATA.copy()
+                data = {"expenditures": [], "revenues": [], "fund_summaries": []}
 
             return ExtractResult(
                 data=data,

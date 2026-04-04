@@ -55,9 +55,25 @@ def test_extract_page_returns_token_counts():
 
 
 def test_extract_page_returns_empty_data_on_invalid_json():
-    client = _make_client(_make_api_response("this is not json"))
+    client = _make_client(_make_api_response("this is not json"))  # default: input=1500, output=300
     result = extract_page(FAKE_PNG, "budget prompt", client)
     assert result.data == {"expenditures": [], "revenues": [], "fund_summaries": []}
+    assert result.input_tokens == 1500
+    assert result.output_tokens == 300
+
+
+def test_extract_page_strips_json_code_fence():
+    fenced = "```json\n" + VALID_RESPONSE_JSON + "\n```"
+    client = _make_client(_make_api_response(fenced))
+    result = extract_page(FAKE_PNG, "budget prompt", client)
+    assert result.data["expenditures"][0]["department"] == "Police"
+
+
+def test_extract_page_strips_bare_code_fence():
+    fenced = "```\n" + VALID_RESPONSE_JSON + "\n```"
+    client = _make_client(_make_api_response(fenced))
+    result = extract_page(FAKE_PNG, "budget prompt", client)
+    assert result.data["expenditures"][0]["department"] == "Police"
 
 
 def _make_status_error(message: str, status_code: int) -> APIStatusError:
