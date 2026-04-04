@@ -106,3 +106,19 @@ def test_upsert_fund_summary():
     upsert_fund_summaries(conn, [summary])
     count = conn.execute("SELECT COUNT(*) FROM fund_summaries").fetchone()[0]
     assert count == 1
+
+
+def test_upsert_fund_summary_is_idempotent():
+    conn = make_conn()
+    summary = FundSummary(
+        pipeline="A", source_file="resources/budgets/2025.pdf",
+        doc_type="budget", fiscal_year=2025, quarter=None,
+        fund="General", total_revenues=200_000_000.0,
+        total_expenditures=195_000_000.0, transfers_in=5_000_000.0,
+        transfers_out=10_000_000.0, beginning_balance=50_000_000.0,
+        ending_balance=50_000_000.0, extracted_at=NOW,
+    )
+    upsert_fund_summaries(conn, [summary])
+    upsert_fund_summaries(conn, [summary])
+    count = conn.execute("SELECT COUNT(*) FROM fund_summaries").fetchone()[0]
+    assert count == 1
