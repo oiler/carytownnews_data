@@ -36,3 +36,8 @@ def test_render_page_invalid_pdf_raises():
 def test_render_page_invalid_page_number_raises():
     with pytest.raises(ValueError, match="page"):
         render_page(str(BUDGET_PDF), 99999)
+
+
+def test_render_page_nonpositive_dpi_raises():
+    with pytest.raises(ValueError, match="dpi"):
+        render_page("nonexistent.pdf", 1, dpi=0)
