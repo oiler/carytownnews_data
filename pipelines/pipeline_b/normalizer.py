@@ -10,6 +10,11 @@ def _now() -> datetime:
     return datetime.now(timezone.utc)
 
 
+def _to_float(d: dict, key: str) -> float | None:
+    v = d.get(key)
+    return float(v) if v is not None else None
+
+
 def normalize(
     raw: dict,
     source_file: str,
@@ -76,10 +81,6 @@ def normalize(
         if not fund:
             continue
 
-        def _f(key: str) -> float | None:
-            v = item.get(key)
-            return float(v) if v is not None else None
-
         fund_summaries.append(FundSummary(
             pipeline="B",
             source_file=source_file,
@@ -87,12 +88,12 @@ def normalize(
             fiscal_year=fiscal_year,
             quarter=quarter,
             fund=fund,
-            total_revenues=_f("total_revenues"),
-            total_expenditures=_f("total_expenditures"),
-            transfers_in=_f("transfers_in"),
-            transfers_out=_f("transfers_out"),
-            beginning_balance=_f("beginning_balance"),
-            ending_balance=_f("ending_balance"),
+            total_revenues=_to_float(item, "total_revenues"),
+            total_expenditures=_to_float(item, "total_expenditures"),
+            transfers_in=_to_float(item, "transfers_in"),
+            transfers_out=_to_float(item, "transfers_out"),
+            beginning_balance=_to_float(item, "beginning_balance"),
+            ending_balance=_to_float(item, "ending_balance"),
             extracted_at=now,
         ))
 

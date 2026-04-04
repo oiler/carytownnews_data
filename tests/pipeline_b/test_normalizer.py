@@ -5,7 +5,7 @@ from pipelines.pipeline_b.normalizer import normalize
 from pipelines.shared.schema import NormalizedResult
 
 SOURCE = "resources/budgets/2025.pdf"
-FIXTURE_DIR = Path("tests/pipeline_b/fixtures")
+FIXTURE_DIR = Path(__file__).parent / "fixtures"
 
 
 def load_fixture(name: str) -> dict:
@@ -80,8 +80,17 @@ def test_normalize_fund_summary_fields():
     result = normalize(raw, SOURCE, "budget", 2025, None)
     assert len(result.fund_summaries) == 1
     fs = result.fund_summaries[0]
+    assert fs.pipeline == "B"
+    assert fs.source_file == SOURCE
+    assert fs.doc_type == "budget"
+    assert fs.fiscal_year == 2025
+    assert fs.quarter is None
     assert fs.fund == "General"
     assert fs.total_revenues == 200_000_000.0
+    assert fs.total_expenditures == 195_000_000.0
+    assert fs.transfers_in == 5_000_000.0
+    assert fs.transfers_out == 10_000_000.0
+    assert fs.beginning_balance == 50_000_000.0
     assert fs.ending_balance == 50_000_000.0
 
 
