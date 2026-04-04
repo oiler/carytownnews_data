@@ -1,3 +1,4 @@
+import fitz
 import pytest
 from pathlib import Path
 from pipelines.pipeline_b.renderer import render_page
@@ -27,7 +28,7 @@ def test_render_page_different_pages_produce_different_bytes():
 
 
 def test_render_page_invalid_pdf_raises():
-    with pytest.raises(Exception):
+    with pytest.raises(fitz.FileNotFoundError):
         render_page("nonexistent.pdf", 1)
 
 
