@@ -72,7 +72,7 @@ def process_file(pdf_path: Path, client: Anthropic, conn, dry_run: bool = False)
     total_input_tokens = 0
     total_output_tokens = 0
     counts = {"expenditures": 0, "revenues": 0, "fund_summaries": 0}
-    log_dir = Path("logs")
+    log_dir = Path(__file__).parent.parent.parent / "logs"
 
     for section, pages in page_map.items():
         for page_num in pages:
@@ -129,15 +129,18 @@ def main(args: list[str] | None = None):
     total_cost = 0.0
     total_errors = 0
 
-    for pdf_path in pdfs:
-        logger.info(f"Processing {pdf_path}")
-        try:
-            result = process_file(pdf_path, client, conn, dry_run=parsed.dry_run)
-            total_cost += result.get("cost_usd", 0)
-            logger.info(f"  rows: {result}  cumulative cost: ${total_cost:.4f}")
-        except Exception as e:
-            logger.error(f"  Failed {pdf_path}: {e}")
-            total_errors += 1
+    try:
+        for pdf_path in pdfs:
+            logger.info(f"Processing {pdf_path}")
+            try:
+                result = process_file(pdf_path, client, conn, dry_run=parsed.dry_run)
+                total_cost += result.get("cost_usd", 0)
+                logger.info(f"  rows: {result}  cumulative cost: ${total_cost:.4f}")
+            except Exception as e:
+                logger.error(f"  Failed {pdf_path}: {e}")
+                total_errors += 1
+    finally:
+        conn.close()
 
     print(f"\nPipeline B complete. Total cost: ${total_cost:.4f}. Errors: {total_errors}")
 
