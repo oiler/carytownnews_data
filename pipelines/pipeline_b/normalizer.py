@@ -12,7 +12,12 @@ def _now() -> datetime:
 
 def _to_float(d: dict, key: str) -> float | None:
     v = d.get(key)
-    return float(v) if v is not None else None
+    if v is None:
+        return None
+    try:
+        return float(v)
+    except (TypeError, ValueError):
+        return None
 
 
 def normalize(

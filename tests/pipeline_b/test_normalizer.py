@@ -132,10 +132,24 @@ def test_normalize_amount_none_drops_row():
     assert len(result.expenditures) == 0
 
 
+def test_normalize_drops_revenue_missing_source():
+    raw = {
+        "expenditures": [],
+        "revenues": [
+            {"fund": "General", "source": None, "amount_type": "adopted", "amount": 5000000},  # dropped
+            {"fund": "General", "source": "Property Tax", "amount_type": "adopted", "amount": 5000000},
+        ],
+        "fund_summaries": [],
+    }
+    result = normalize(raw, SOURCE, "budget", 2025, None)
+    assert len(result.revenues) == 1
+    assert result.revenues[0].source == "Property Tax"
+
+
 @pytest.mark.slow
 def test_normalize_budget_fixture():
     """Uses the real API fixture saved in Task 3."""
     raw = load_fixture("claude_budget_response.json")
     result = normalize(raw, SOURCE, "budget", 2025, None)
-    total_rows = len(result.expenditures) + len(result.revenues) + len(result.fund_summaries)
-    assert total_rows > 0, "Expected at least one row from the real budget fixture"
+    # The fixture has expenditures with null departments (all dropped) and at least one revenue
+    assert len(result.revenues) > 0, "Expected at least one revenue from the real budget fixture"
