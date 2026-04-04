@@ -38,5 +38,4 @@ def test_prompt_specifies_null_for_missing_fields():
 
 def test_prompt_requests_amounts_as_numbers():
     prompt = get_prompt("budget")
-    # Prompt should instruct Claude to return numbers, not strings with $ or ,
-    assert "$" not in prompt or "no $" in prompt.lower() or "without" in prompt.lower()
+    assert "without" in prompt.lower() and "dollar" in prompt.lower()
