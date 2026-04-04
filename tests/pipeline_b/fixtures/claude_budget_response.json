@@ -1,0 +1,27 @@
+{
+  "expenditures": [
+    {
+      "fund": "CAMPO Fund",
+      "department": null,
+      "division": null,
+      "amount_type": "adopted",
+      "amount": 97000
+    },
+    {
+      "fund": "General",
+      "department": null,
+      "division": "Historic Preservation",
+      "amount_type": "adopted",
+      "amount": 2500000
+    }
+  ],
+  "revenues": [
+    {
+      "fund": "CAMPO Fund",
+      "source": "Town of Apex and The Durham Chapel Hill Carrboro metropolitan planning organization participation",
+      "amount_type": "adopted",
+      "amount": 97000
+    }
+  ],
+  "fund_summaries": []
+}
