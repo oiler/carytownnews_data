@@ -35,6 +35,12 @@ def test_parse_amount_empty_returns_none():
 def test_parse_amount_none_input_returns_none():
     assert _parse_amount(None) is None
 
+def test_parse_amount_with_whitespace():
+    assert _parse_amount("  $1,234  ") == 1_234.0
+
+def test_parse_amount_decimal():
+    assert _parse_amount("1,234.56") == 1_234.56
+
 # ── normalize_budget ──────────────────────────────────────────────────────────
 
 BUDGET_OVERVIEW_TEXT = """BUDGET OVERVIEW - ALL FUNDS
@@ -157,16 +163,12 @@ Total net position 195,000,000 88,000,000 283,000,000
 def test_normalize_acfr_returns_normalized_result():
     result = normalize_acfr({50: ACFR_TEXT}, SOURCE_ACFR, 2024)
     assert isinstance(result, NormalizedResult)
+    # ACFR returns empty rows — Pipeline B handles ACFR via Claude Vision
+    assert result.expenditures == []
+    assert result.revenues == []
+    assert result.fund_summaries == []
 
-def test_normalize_acfr_pipeline_is_A():
+def test_normalize_acfr_returns_empty_for_now():
+    """Placeholder: ACFR normalizer intentionally returns empty (Pipeline B handles ACFR)."""
     result = normalize_acfr({50: ACFR_TEXT}, SOURCE_ACFR, 2024)
-    all_rows = result.expenditures + result.revenues + result.fund_summaries
-    # ACFR may extract fund_summaries
-    if all_rows:
-        assert all(r.pipeline == "A" for r in all_rows)
-
-def test_normalize_acfr_fiscal_year_correct():
-    result = normalize_acfr({50: ACFR_TEXT}, SOURCE_ACFR, 2024)
-    all_rows = result.expenditures + result.revenues + result.fund_summaries
-    if all_rows:
-        assert all(r.fiscal_year == 2024 for r in all_rows)
+    assert isinstance(result, NormalizedResult)

@@ -13,6 +13,20 @@ import logging
 import re
 from datetime import datetime, timezone
 
+# Detect millions format: currency values that are small decimals (< 10,000)
+# with explicit $ prefix or explicit "million"/"M" label
+_MILLIONS_RE = re.compile(r'\$\s*(\d{1,3}(?:\.\d+)?)\b(?!\s*%)')
+
+
+def _is_millions_format(text: str) -> bool:
+    """Return True if the page uses millions notation (e.g. '$ 270.1' means $270.1M)."""
+    if re.search(r'\bmillion\b|\bM\b', text, re.IGNORECASE):
+        return True
+    matches = _MILLIONS_RE.findall(text)
+    # Only trigger if we find multiple small-decimal currency values (< 1000)
+    small_currency = [m for m in matches if float(m) < 1000]
+    return len(small_currency) >= 2
+
 from pipelines.shared.schema import Expenditure, FundSummary, NormalizedResult, Revenue
 
 logger = logging.getLogger(__name__)
@@ -32,9 +46,6 @@ _SKIP_LABELS = {
     "revenues & sources",
     "expenditures & uses",
 }
-
-# A number token: digits with optional commas and decimal, or parenthesized version
-_NUMBER_RE = re.compile(r"\([\d,]+(?:\.\d+)?\)|\$?\s*[\d,]+(?:\.\d+)?")
 
 
 def _parse_amount(value: str | None) -> float | None:
@@ -67,7 +78,7 @@ def _infer_amount_type(type_word: str, col_fiscal_year: int, doc_fiscal_year: in
     if "adopted" in h:
         return "adopted"
     if "estimated" in h or "estimate" in h:
-        return "actual"  # treat estimated as actual (best available)
+        return "estimated"
     if "recommended" in h:
         return "recommended"
     # If the year matches the document fiscal year, assume adopted
@@ -244,7 +255,7 @@ def _parse_budget_overview(
         if re.match(r"^[\s\d]+$", line) and re.search(r"(20\d{2})", line):
             prev_line = lines[i - 1] if i > 0 else ""
             next_line = lines[i + 1] if i + 1 < len(lines) else ""
-            type_line = prev_line if _is_type_word_line(next_line) else next_line
+            type_line = next_line if _is_type_word_line(next_line) else prev_line
             col_map = _parse_combined_header(type_line, line, fiscal_year)
             i += 1
             continue
@@ -397,7 +408,7 @@ def _parse_dept_profile(
 
         label, amounts = parsed
 
-        if label.lower() in _SKIP_LABELS or label.lower() == "total":
+        if label.lower() in _SKIP_LABELS:
             i += 1
             continue
         # Skip "Authorized FTEs" rows — not monetary
@@ -448,14 +459,7 @@ def normalize_quarterly(
         lines = [ln.strip() for ln in text.splitlines() if ln.strip()]
 
         # Detect if this page uses millions notation
-        uses_millions = any("million" in ln.lower() or "in millions" in ln.lower() for ln in lines)
-        # Also detect from the summary table pattern: amounts like "270.1"
-        # which are small floating point numbers alongside a % column
-        if not uses_millions:
-            float_pattern = re.findall(r"\$\s*[\d]+\.\d+", text)
-            if float_pattern:
-                uses_millions = True
-        scale = 1_000_000.0 if uses_millions else 1.0
+        scale = 1_000_000.0 if _is_millions_format(text) else 1.0
 
         current_fund = "General"
         total_revenues: float | None = None
