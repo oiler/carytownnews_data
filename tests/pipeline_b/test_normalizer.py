@@ -153,3 +153,17 @@ def test_normalize_budget_fixture():
     result = normalize(raw, SOURCE, "budget", 2025, None)
     # The fixture has expenditures with null departments (all dropped) and at least one revenue
     assert len(result.revenues) > 0, "Expected at least one revenue from the real budget fixture"
+
+
+@pytest.mark.slow
+def test_normalize_quarterly_fixture():
+    """Uses the real API fixture saved in Task 3."""
+    raw = load_fixture("claude_quarterly_response.json")
+    result = normalize(raw, "resources/quarterly-reports/2024-q3.pdf", "quarterly", 2024, 3)
+    # Quarterly fixture should have fund summaries with values in proper dollar scale (millions)
+    total_rows = len(result.expenditures) + len(result.revenues) + len(result.fund_summaries)
+    assert total_rows > 0, "Expected at least one row from the real quarterly fixture"
+    # If fund summaries present, values should be in full dollars (>1M), not millions notation
+    for fs in result.fund_summaries:
+        if fs.total_expenditures is not None:
+            assert fs.total_expenditures > 1_000_000, f"Expected full dollar value, got {fs.total_expenditures}"

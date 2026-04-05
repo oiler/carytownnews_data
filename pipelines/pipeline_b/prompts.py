@@ -53,6 +53,8 @@ Extract the financial highlights data visible on this page.
 
 {shared}
 
+Important: Dollar amounts in this document are displayed in millions. A table value of 183.7 means $183,700,000. Return the full dollar amount (e.g. return 183700000, not 183.7).
+
 Return this exact JSON structure:
 {{
   "expenditures": [],
@@ -111,6 +113,7 @@ Return this exact JSON structure:
   ]
 }}
 
+amount_type for ACFR documents is always "actual" (these are audited final figures).
 If a section is not present on this page, return an empty array for that key.
 """.format(shared=_SHARED_INSTRUCTIONS)
 
