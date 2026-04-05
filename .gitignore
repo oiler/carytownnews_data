@@ -1,0 +1,21 @@
+# Environment
+.env
+
+# Data and logs (generated at runtime)
+data/
+logs/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+
+# Testing
+.pytest_cache/
+
+# macOS
+.DS_Store
+
+# Resources (large PDFs — add manually or via git-lfs if needed)
+resources/
