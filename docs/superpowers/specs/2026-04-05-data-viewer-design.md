@@ -43,8 +43,8 @@ Install with the existing `uv pip install -r requirements.txt` workflow.
 datasette data/cary.db --metadata datasette.yaml
 ```
 
-Opens at `http://127.0.0.1:8001`. Datasette auto-reloads when the DB changes — just
-refresh the browser after a pipeline run.
+Opens at `http://127.0.0.1:8001`. Datasette reads live from SQLite on each request —
+just refresh the browser after a pipeline run to see updated data.
 
 ## datasette.yaml Contents
 
