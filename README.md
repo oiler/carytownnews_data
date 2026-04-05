@@ -25,7 +25,7 @@ resources/
 ## Setup
 
 ```bash
-uv pip install -r requirements.txt
+uv pip install -e ".[dev]"
 cp .env.example .env   # add ANTHROPIC_API_KEY for Pipeline B
 ```
 
