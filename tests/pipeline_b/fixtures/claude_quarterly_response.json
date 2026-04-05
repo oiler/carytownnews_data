@@ -1,35 +1,15 @@
 {
-  "expenditures": [
-    {
-      "category": "General Fund Expenditures",
-      "fy_2024_ytd_adj_budget": 270.1,
-      "fy_2024_ytd_actual": 196.6,
-      "percent_of_budget": 73,
-      "fy_2023_ytd_actual": 186.3,
-      "change_from_prior_year_dollars": 10.3,
-      "change_from_prior_year_percent": 6
-    }
-  ],
-  "revenues": [
-    {
-      "category": "General Fund Revenues",
-      "fy_2024_ytd_adj_budget": 270.1,
-      "fy_2024_ytd_actual": 183.7,
-      "percent_of_budget": 68,
-      "fy_2023_ytd_actual": 179.7,
-      "change_from_prior_year_dollars": 4.0,
-      "change_from_prior_year_percent": 2
-    }
-  ],
+  "expenditures": [],
+  "revenues": [],
   "fund_summaries": [
     {
       "fund": "General Fund",
-      "total_revenues": 183.7,
-      "total_expenditures": 196.6,
+      "total_revenues": 183700000,
+      "total_expenditures": 196600000,
       "transfers_in": null,
       "transfers_out": null,
       "beginning_balance": null,
-      "ending_balance": -12.9
+      "ending_balance": null
     }
   ]
 }
