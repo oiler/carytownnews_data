@@ -24,10 +24,18 @@ resources/
 
 ## Setup
 
+**Prerequisites:** Python 3.11+, [uv](https://docs.astral.sh/uv/getting-started/installation/)
+
 ```bash
+# Install dependencies
 uv pip install -e ".[dev]"
-cp .env.example .env   # add ANTHROPIC_API_KEY for Pipeline B
+
+# Pipeline B only: set up your Anthropic API key
+cp .env.example .env
+# then edit .env and replace the placeholder with your actual key
 ```
+
+Pipeline A works without any API key. Pipeline B requires an `ANTHROPIC_API_KEY` — get one at console.anthropic.com.
 
 ## Running Pipeline A
 
