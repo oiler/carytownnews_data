@@ -4,9 +4,11 @@
 
 **Goal:** Extract financial data (expenditures, revenues, fund summaries) from Town of Cary PDF documents using pdfplumber/camelot and load into SQLite.
 
-**Architecture:** PDF files in `resources/` are targeted by hardcoded page ranges in `page_map.py`. `extractor.py` pulls raw DataFrames using pdfplumber (camelot fallback). `normalizer.py` converts DataFrames to typed schema rows. `db.py` upserts into SQLite. Pipeline B reuses `shared/` modules.
+**Architecture:** PDF files in `resources/` are scanned by `page_finder.py` which locates sections by keyword (page numbers shift 10–15 pages across fiscal years, so fixed numbers are unreliable). `page_map.py` stores keyword anchors per doc type. `extractor.py` uses `extract_tables()` for quarterly reports and `extract_text()` + regex for budget/ACFR pages where table extraction fails. `normalizer.py` converts raw text/DataFrames to typed schema rows. `db.py` upserts into SQLite. Pipeline B reuses `shared/` modules.
 
-**Tech Stack:** Python 3.12+, pdfplumber, camelot-py[cv], pandas, sqlite3, pytest, uv
+**Tech Stack:** Python 3.12+, pdfplumber, pandas, sqlite3, pytest, uv
+
+**Note: camelot-py[cv] dropped** — inspection confirmed `extract_table()` fails on most budget/ACFR pages anyway. Text extraction + regex is the right approach. Camelot dependency removed.
 
 ---
 
@@ -17,8 +19,9 @@ pipelines/
   __init__.py
   pipeline_a/
     __init__.py
-    page_map.py        # Hardcoded page ranges per doc_type + fiscal_year
-    extractor.py       # pdfplumber primary, camelot fallback
+    page_map.py        # Keyword anchors per doc_type (NOT fixed page numbers)
+    page_finder.py     # Scans PDF text to locate sections by keyword
+    extractor.py       # extract_tables() for quarterly; extract_text() for budget/ACFR
     normalizer.py      # Per-doc-type normalization → schema dataclasses
     run.py             # Entry point: discover PDFs, orchestrate, log summary
   shared/
