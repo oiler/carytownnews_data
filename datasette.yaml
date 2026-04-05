@@ -51,6 +51,7 @@ databases:
             AND a.fund        = b.fund
             AND a.department  = b.department
             AND COALESCE(a.division, '') = COALESCE(b.division, '')
+            AND a.quarter     IS b.quarter
             AND a.amount_type = b.amount_type
           WHERE a.pipeline = 'A'
             AND b.pipeline = 'B'
@@ -78,6 +79,7 @@ databases:
             AND a.fund        = b.fund
             AND a.department  = b.department
             AND COALESCE(a.division, '') = COALESCE(b.division, '')
+            AND a.quarter     IS b.quarter
             AND a.amount_type = b.amount_type
           WHERE a.pipeline = 'A'
             AND b.pipeline = 'B'
