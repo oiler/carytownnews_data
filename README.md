@@ -11,6 +11,22 @@ Two independent extraction pipelines write to the same SQLite schema, allowing c
 
 Both pipelines produce rows in `data/cary.db` with a `pipeline` column (`'A'` or `'B'`) so results can be compared.
 
+## Viewing the Data
+
+```bash
+datasette data/cary.db --metadata datasette.yaml
+```
+
+Opens at `http://127.0.0.1:8001`. The database page lists five pre-written queries:
+
+- **Pipeline Comparison** — side-by-side A vs B amounts for the same doc/year/fund/department
+- **Pipeline Disagreements** — rows where A and B differ, ordered by discrepancy size
+- **Year-Over-Year Totals** — total expenditures by fiscal year and pipeline
+- **Fund Totals** — expenditures aggregated by fund and year
+- **Extraction Coverage** — row counts per pipeline/doc type/year to see what's been extracted
+
+Any query result can be exported as CSV or JSON via the links below the table. Charts are available via the Vega plugin button.
+
 ## Documents
 
 PDFs are stored in `resources/`:
