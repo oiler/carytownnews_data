@@ -1,0 +1,124 @@
+title: Cary Civic Data
+description: Town of Cary financial data — budgets, ACFRs, quarterly reports
+
+databases:
+  cary:
+    tables:
+      expenditures:
+        description: "Departmental expenditure rows from budgets, ACFRs, and quarterly reports"
+        columns:
+          pipeline: "A = pdfplumber · B = Claude Vision"
+          amount_type: "adopted, actual, prior_year_actual, recommended, or estimated"
+          doc_type: "budget, acfr, or quarterly"
+          quarter: "1–4 for quarterly reports; NULL for annual documents"
+          extracted_at: "Timestamp when this row was written to the database"
+      revenues:
+        description: "Revenue rows from budgets, ACFRs, and quarterly reports"
+        columns:
+          pipeline: "A = pdfplumber · B = Claude Vision"
+          amount_type: "adopted, actual, prior_year_actual, recommended, or estimated"
+          doc_type: "budget, acfr, or quarterly"
+          quarter: "1–4 for quarterly reports; NULL for annual documents"
+          extracted_at: "Timestamp when this row was written to the database"
+      fund_summaries:
+        description: "Fund-level totals with revenues, expenditures, transfers, and balances"
+        columns:
+          pipeline: "A = pdfplumber · B = Claude Vision"
+          doc_type: "budget, acfr, or quarterly"
+          quarter: "1–4 for quarterly reports; NULL for annual documents"
+          extracted_at: "Timestamp when this row was written to the database"
+    queries:
+      pipeline_comparison:
+        title: "Pipeline Comparison — Expenditures"
+        description: "Side-by-side Pipeline A vs B for the same document, year, fund, and department"
+        sql: |
+          SELECT
+            a.doc_type,
+            a.fiscal_year,
+            a.source_file,
+            a.fund,
+            a.department,
+            a.division,
+            a.amount_type,
+            a.amount                      AS pipeline_a,
+            b.amount                      AS pipeline_b,
+            ROUND(a.amount - b.amount, 2) AS difference
+          FROM expenditures a
+          JOIN expenditures b
+            ON  a.doc_type    = b.doc_type
+            AND a.fiscal_year = b.fiscal_year
+            AND a.source_file = b.source_file
+            AND a.fund        = b.fund
+            AND a.department  = b.department
+            AND COALESCE(a.division, '') = COALESCE(b.division, '')
+            AND a.amount_type = b.amount_type
+          WHERE a.pipeline = 'A'
+            AND b.pipeline = 'B'
+          ORDER BY a.doc_type, a.fiscal_year, a.fund, a.department
+      pipeline_disagreements:
+        title: "Pipeline Disagreements — Expenditures"
+        description: "Rows where A and B extracted different amounts, ordered by discrepancy size"
+        sql: |
+          SELECT
+            a.doc_type,
+            a.fiscal_year,
+            a.source_file,
+            a.fund,
+            a.department,
+            a.division,
+            a.amount_type,
+            a.amount                             AS pipeline_a,
+            b.amount                             AS pipeline_b,
+            ROUND(ABS(a.amount - b.amount), 2)   AS discrepancy
+          FROM expenditures a
+          JOIN expenditures b
+            ON  a.doc_type    = b.doc_type
+            AND a.fiscal_year = b.fiscal_year
+            AND a.source_file = b.source_file
+            AND a.fund        = b.fund
+            AND a.department  = b.department
+            AND COALESCE(a.division, '') = COALESCE(b.division, '')
+            AND a.amount_type = b.amount_type
+          WHERE a.pipeline = 'A'
+            AND b.pipeline = 'B'
+            AND ABS(a.amount - b.amount) > 0.01
+          ORDER BY discrepancy DESC
+      year_over_year:
+        title: "Year-Over-Year Expenditure Totals"
+        description: "Total expenditures by fiscal year, pipeline, and amount type"
+        sql: |
+          SELECT
+            fiscal_year,
+            pipeline,
+            amount_type,
+            ROUND(SUM(amount), 2) AS total
+          FROM expenditures
+          GROUP BY fiscal_year, pipeline, amount_type
+          ORDER BY fiscal_year, pipeline, amount_type
+      fund_totals:
+        title: "Fund Totals by Year"
+        description: "Total expenditures by fund, fiscal year, pipeline, and amount type"
+        sql: |
+          SELECT
+            fund,
+            fiscal_year,
+            pipeline,
+            amount_type,
+            ROUND(SUM(amount), 2) AS total
+          FROM expenditures
+          GROUP BY fund, fiscal_year, pipeline, amount_type
+          ORDER BY fund, fiscal_year, pipeline, amount_type
+      extraction_coverage:
+        title: "Extraction Coverage"
+        description: "Row counts per pipeline, document type, and fiscal year — shows what has been extracted and what is missing"
+        sql: |
+          SELECT
+            pipeline,
+            doc_type,
+            fiscal_year,
+            COUNT(*)          AS row_count,
+            MIN(extracted_at) AS first_extracted,
+            MAX(extracted_at) AS last_extracted
+          FROM expenditures
+          GROUP BY pipeline, doc_type, fiscal_year
+          ORDER BY pipeline, doc_type, fiscal_year
